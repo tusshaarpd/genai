@@ -19,7 +19,7 @@ def search_jobs_with_serpapi(query, location):
     """
     Fetches job postings from Google using SerpAPI.
     """
-    api_key = "your_serpapi_api_key"  # Replace with your actual SerpAPI key
+    api_key = st.secrets["SERPAPI_KEY"]  # Replace with your actual SerpAPI key
     url = "https://serpapi.com/search"
     params = {
         "engine": "google_jobs",  # Specify that we're searching for Google Jobs
