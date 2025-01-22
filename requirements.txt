@@ -1,4 +1,2 @@
 streamlit
-transformers
 requests
-beautifulsoup4
