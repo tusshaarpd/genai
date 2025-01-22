@@ -1,85 +1,64 @@
-# Install necessary libraries
+# Install required libraries
 import streamlit as st
 import requests
-from bs4 import BeautifulSoup
-from transformers import pipeline
 
 # Title and description
-st.title("Job Search Scraper")
+st.title("Job Search App")
 st.write("""
-This app scrapes Google to find job postings based on the role you input. It also uses an open-source LLM for additional analysis, 
-such as summarizing job descriptions or extracting key skills.
+This app searches Google for job postings based on the role you input, using SerpAPI for reliable results.
 """)
 
 # Input: Job Role
 job_role = st.text_input("Enter the job role (e.g., TPM, Data Scientist):", placeholder="Type a job role here...")
 
-# Scraper function
-def scrape_google_jobs(job_role):
+# Input: Location (optional)
+job_location = st.text_input("Enter the job location (optional):", placeholder="Type a location here...")
+
+# Function to search Google using SerpAPI
+def search_jobs_with_serpapi(query, location):
     """
-    Scrapes Google Search for job postings related to the given role.
+    Fetches job postings from Google using SerpAPI.
     """
+    api_key = "your_serpapi_api_key"  # Replace with your actual SerpAPI key
+    url = "https://serpapi.com/search"
+    params = {
+        "engine": "google_jobs",  # Specify that we're searching for Google Jobs
+        "q": query,
+        "location": location,
+        "api_key": api_key,
+    }
+
     try:
-        # Format the search query
-        query = f"{job_role} jobs"
-        url = f"https://www.google.com/search?q={query.replace(' ', '+')}&tbm=nws"
-
-        # Send a GET request
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, params=params)
         response.raise_for_status()
-
-        # Parse the HTML content
-        soup = BeautifulSoup(response.text, "html.parser")
-        job_results = []
+        results = response.json()
 
         # Extract job postings
-        for result in soup.find_all("div", class_="BNeawe vvjwJb AP7Wnd"):
-            title = result.get_text()
-            link = result.find_parent("a")["href"]
-            job_results.append({"title": title, "link": link})
-
-        return job_results
+        jobs = results.get("jobs_results", [])
+        return jobs
 
     except requests.exceptions.RequestException as e:
-        st.error("Error fetching data from Google. Please try again later.")
+        st.error(f"An error occurred: {e}")
         return []
 
-# NLP function for summarization
-def summarize_text(text):
-    """
-    Summarizes the given text using a pre-trained Hugging Face model.
-    """
-    summarizer = pipeline("summarization", model="t5-small")
-    summary = summarizer(text, max_length=50, min_length=10, do_sample=False)
-    return summary[0]["summary_text"]
-
-# Button to trigger scraping
-if st.button("Find Jobs"):
+# Button to trigger job search
+if st.button("Search Jobs"):
     if job_role:
         st.write(f"Searching for jobs related to: **{job_role}**")
-        jobs = scrape_google_jobs(job_role)
+        location = job_location if job_location else "Worldwide"
+        jobs = search_jobs_with_serpapi(job_role, location)
 
         if jobs:
-            st.write("### Found Job Postings:")
+            st.write("### Job Postings Found:")
             for job in jobs:
-                st.markdown(f"- **{job['title']}** - [Link]({job['link']})")
+                st.markdown(f"""
+                - **{job['title']}**  
+                  Location: {job.get('location', 'N/A')}  
+                  Company: {job.get('company_name', 'N/A')}  
+                  [Job Link]({job['link']})
+                """)
         else:
             st.write("No job postings found. Please try a different query.")
     else:
         st.error("Please enter a job role.")
-
-# Optional NLP Analysis
-if st.checkbox("Enable NLP Analysis"):
-    st.write("### NLP Analysis (e.g., Summarization):")
-    input_text = st.text_area("Paste a job description or content here:")
-    if st.button("Summarize"):
-        if input_text.strip():
-            summary = summarize_text(input_text)
-            st.write("#### Summary:")
-            st.write(summary)
-        else:
-            st.error("Please enter some text to summarize.")
 
