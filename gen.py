@@ -55,11 +55,19 @@ if st.button("Search Jobs"):
         if jobs:
             st.write("### Job Postings Found:")
             for job in jobs:
+                job_title = job.get('title', 'No title provided')
+                job_location = job.get('location', 'Location not specified')
+                company_name = job.get('company_name', 'Company not specified')
+                job_link = job.get('link', '#')  # Provide fallback link if missing
+
+                # Debugging: Print the link to ensure it is correct
+                st.write(f"Job Link: {job_link}")
+
                 st.markdown(f"""
-                - **{job.get('title', 'No title provided')}**  
-                  Location: {job.get('location', 'Location not specified')}  
-                  Company: {job.get('company_name', 'Company not specified')}  
-                  [Job Link]({job.get('link', '#')})
+                - **{job_title}**  
+                  Location: {job_location}  
+                  Company: {company_name}  
+                  [Job Link]({job_link})
                 """)
         else:
             st.write("No job postings found. Please try a different query.")
