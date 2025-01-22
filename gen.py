@@ -19,7 +19,11 @@ def search_jobs_with_serpapi(query, location):
     """
     Fetches job postings from Google using SerpAPI.
     """
-    api_key = st.secrets["SERPAPI_KEY"]  # Replace with your actual SerpAPI key
+    if "SERPAPI_KEY" not in st.secrets:
+        st.error("API key is missing! Please add your SerpAPI key to Streamlit secrets.")
+        return []
+
+    api_key = st.secrets["SERPAPI_KEY"]
     url = "https://serpapi.com/search"
     params = {
         "engine": "google_jobs",  # Specify that we're searching for Google Jobs
@@ -52,13 +56,12 @@ if st.button("Search Jobs"):
             st.write("### Job Postings Found:")
             for job in jobs:
                 st.markdown(f"""
-                - **{job['title']}**  
-                  Location: {job.get('location', 'N/A')}  
-                  Company: {job.get('company_name', 'N/A')}  
-                  [Job Link]({job['link']})
+                - **{job.get('title', 'No title provided')}**  
+                  Location: {job.get('location', 'Location not specified')}  
+                  Company: {job.get('company_name', 'Company not specified')}  
+                  [Job Link]({job.get('link', '#')})
                 """)
         else:
             st.write("No job postings found. Please try a different query.")
     else:
         st.error("Please enter a job role.")
-
